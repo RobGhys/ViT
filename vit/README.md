@@ -1,1 +1,0 @@
-# Implementation for the Vision Transformer architecture

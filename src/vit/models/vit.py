@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch
-from createPatches import CreatePatches
-from attentionBlock import AttentionBlock
 
+from vit.models.attentionBlock import AttentionBlock
+from vit.models.createPatches import CreatePatches
 
 class ViT(nn.Module):
     def __init__(
@@ -52,17 +52,42 @@ class ViT(nn.Module):
             nn.init.constant_(m.bias, 0)
             nn.init.constant_(m.weight, 1.0)
 
-    def forward(self, x):
+    def forward(self, x, verbose: bool = False):
         x = self.patches(x)
         b, n, _ = x.shape
 
+        if verbose: print(f'cls_tokens shape: {self.cls_token.shape}')
         cls_tokens = self.cls_token.expand(b, -1, -1)
+        if verbose: print(f'cls_tokens shape after expand: {self.cls_token.shape}')
         x = torch.cat((cls_tokens, x), dim=1)
         x += self.pos_embedding
         x = self.dropout(x)
         for layer in self.attn_layers:
             x = layer(x)
         x = self.ln(x)
-        x = x[:, 0]
+        x = x[:, 0]  # 1st element is cls, i.e. classification token
 
         return self.head(x)
+
+
+if __name__ == '__main__':
+    model = ViT(
+        img_size=224,
+        patch_size=16,
+        embed_dim=768,
+        hidden_dim=3072,
+        num_heads=12,
+        num_layers=12
+    )
+    print(model)
+
+    # Total parameters and trainable parameters.
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"{total_params:,} total parameters.")
+    total_trainable_params = sum(
+        p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"{total_trainable_params:,} training parameters.")
+    rnd_int = torch.randn(1, 3, 224, 224)
+    output = model(rnd_int)
+    print(f"Output shape from model: {output.shape}")
+

@@ -31,3 +31,19 @@ class AttentionBlock(nn.Module):
         x = x + self.MLP(self.norm(x))
 
         return x
+
+
+if __name__ == '__main__':
+    embed_dim: int = 768
+    hidden_dim: int = 3072
+    num_heads: int = 12
+    dropout: float = 0.0
+    batch_size = 1
+
+    model = AttentionBlock(embed_dim, hidden_dim, num_heads, dropout)
+    input_data = torch.rand(batch_size, num_heads, embed_dim)
+    output = model(input_data)
+
+    print(f'output shape: {output.shape}')
+
+    print('Test Passed')
